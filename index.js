@@ -31,5 +31,24 @@ server.get("/categories", async (req, resp) => {
     }
 })
 
+server.post("/categories", async (req, resp) => {
+    const { name } = req.body;
+
+    if(!name || name.length === 0) {
+        return resp.sendStatus(400);    
+    }
+
+    try {
+        const nameCheck = await connection.query('SELECT * FROM categories WHERE name = $1', [name]);
+        if(nameCheck.rows.length !== 0) {
+            return resp.sendStatus(409);
+          }
+        await connection.query('INSERT INTO categories (name) VALUES ($1);', [name]);
+        return resp.sendStatus(201);
+    }
+    catch (error){
+        return resp.sendStatus(500);
+    }  
+})
 
 server.listen(4000);
