@@ -1,7 +1,7 @@
-import express from "express";
-import cors from "cors";
-import pg from "pg";
-import { json } from "express";
+import express from 'express';
+import cors from 'cors';
+import pg from 'pg';
+import { json } from 'express';
 
 
 const server = express();
@@ -21,7 +21,7 @@ const connection = new Pool(connectionData);
 server.use(cors());
 server.use(json());
 
-server.get("/categories", async (req, resp) => {
+server.get('/categories', async (req, resp) => {
     try {
         const result = await connection.query('SELECT * FROM categories;');  
         resp.send(result.rows);
@@ -31,7 +31,7 @@ server.get("/categories", async (req, resp) => {
     }
 })
 
-server.post("/categories", async (req, resp) => {
+server.post('/categories', async (req, resp) => {
     const { name } = req.body;
 
     if(!name || name.length === 0) {
@@ -49,6 +49,16 @@ server.post("/categories", async (req, resp) => {
     catch (error){
         return resp.sendStatus(500);
     }  
+})
+
+server.get('/games', async (req, resp) => {
+    try {
+        const result = await connection.query('SELECT * FROM games;');
+        resp.send(result.rows);
+    }
+    catch (error) {
+        resp.sendStatus(500);
+    }
 })
 
 server.listen(4000);
