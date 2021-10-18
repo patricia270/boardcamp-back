@@ -52,13 +52,49 @@ server.post('/categories', async (req, resp) => {
 })
 
 server.get('/games', async (req, resp) => {
+    const name = req.query.name;
     try {
+        if (name) {
+            const filteredResult = await connection.query('SELECT * FROM games WHERE name ILIKE $1;', [`${name}%`]);
+            return resp.send(filteredResult.rows);
+        }
         const result = await connection.query('SELECT * FROM games;');
-        resp.send(result.rows);
+        return resp.send(result.rows);
     }
     catch (error) {
         resp.sendStatus(500);
     }
+})
+
+server.post("/games", async (req, resp) => {
+    const {
+        name,
+        image,
+        stockTotal,
+        categoryId,
+        pricePerDay
+    } = req.body;
+
+    if(!name || name.length === 0 || stockTotal === 0 || pricePerDay === 0) {
+        return resp.sendStatus(400);    
+    }
+
+    try {
+        const idCheck = await connection.query('SELECT id FROM categories WHERE id=$1;', [categoryId]);
+        if(idCheck.rows.length === 0){
+            return resp.sendStatus(400);
+        }
+
+        const gameCheck = await connection.query('SELECT * FROM games WHERE name = $1;', [name]);
+        if(gameCheck.rows.length !== 0) {
+            return resp.sendStatus(409);
+          }
+        await connection.query('INSERT INTO games (name, image, "stockTotal","categoryId", "pricePerDay") VALUES ($1, $2, $3, $4, $5);', [name, image, stockTotal, categoryId, pricePerDay]);
+        return resp.sendStatus(201);
+    }
+    catch (error){
+        return resp.sendStatus(500);
+    }  
 })
 
 server.listen(4000);
