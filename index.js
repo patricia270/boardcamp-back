@@ -66,7 +66,7 @@ server.get('/games', async (req, resp) => {
     }
 })
 
-server.post("/games", async (req, resp) => {
+server.post('/games', async (req, resp) => {
     const {
         name,
         image,
@@ -95,6 +95,21 @@ server.post("/games", async (req, resp) => {
     catch (error){
         return resp.sendStatus(500);
     }  
+})
+
+server.get('/customers', async (req, resp) => {
+    const cpf = req.query.cpf;
+    try {
+        if (cpf) {
+            const filteredResult = await connection.query('SELECT * FROM customers WHERE cpf ILIKE $1;', [`${cpf}%`]);
+            return resp.send(filteredResult.rows);
+        }
+        const result = await connection.query('SELECT * FROM customers;');
+        return resp.send(result.rows);
+    }
+    catch (error) {
+        resp.sendStatus(500);
+    }
 })
 
 server.listen(4000);
