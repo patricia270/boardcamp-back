@@ -161,4 +161,32 @@ server.post('/customers', async (req, resp) => {
     }  
 })
 
+server.put('/customers/:id', async (req, resp) => {
+    const { id } = req.params;
+    const {
+        name,
+        phone,
+        cpf,
+        birthday
+    } = req.body;
+
+    const { error, value} = schemaCustomers.validate({name, cpf, phone});
+    if (error) {
+        resp.sendStatus(400)
+        return;
+    }
+
+    try {  
+        const cpfCheck = await connection.query('SELECT * FROM customers WHERE cpf = $1;', [cpf]);
+        if (cpfCheck.rows.length !== 0 && cpfCheck.rows[0].id !== Number(id)) {
+            return resp.sendStatus(409);
+        }  
+        await connection.query('UPDATE customers SET name = $2 , phone = $3, cpf = $4, birthday = $5 WHERE id = $1;', [id, name, phone, cpf, birthday]);
+        return resp.sendStatus(200);
+    }
+    catch (error){
+        return resp.sendStatus(500);
+    }  
+})
+
 server.listen(4000);
