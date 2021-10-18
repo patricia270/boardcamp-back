@@ -112,4 +112,19 @@ server.get('/customers', async (req, resp) => {
     }
 })
 
+server.get('/customers/:id', async (req, resp) => {
+    const { id } = req.params;
+    
+    try {
+        const result = await connection.query('SELECT * FROM customers WHERE id=$1;', [id]);
+        if(result.rows.length === 0) {
+            return resp.sendStatus(404);
+        }
+        return resp.send(result.rows);
+    }
+    catch (error) {
+        resp.sendStatus(500);
+    }
+})
+
 server.listen(4000);
