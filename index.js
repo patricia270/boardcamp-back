@@ -1,10 +1,17 @@
 import express from 'express';
 import cors from 'cors';
 import pg from 'pg';
+import Joi from 'joi';
 import { json } from 'express';
 
 
 const server = express();
+
+const schemaCustomers = Joi.object({
+    name: Joi.string().required(),
+    phone: Joi.string().pattern(/^\(?[1-9]{2}\)? ?(?:[2-8]|9[1-9])[0-9]{3}\-?[0-9]{4}$/),
+    cpf: Joi.string().pattern(/[0-9]{3}\.?[0-9]{3}\.?[0-9]{3}\-?[0-9]{2}/)
+});
 
 const { Pool } = pg;
 
@@ -125,6 +132,33 @@ server.get('/customers/:id', async (req, resp) => {
     catch (error) {
         resp.sendStatus(500);
     }
+})
+
+server.post('/customers', async (req, resp) => {
+    const {
+        name,
+        phone,
+        cpf,
+        birthday
+    } = req.body;
+
+    const { error, value} = schemaCustomers.validate({name, cpf, phone});
+    if (error) {
+        resp.sendStatus(400)
+        return;
+    }
+
+    try {  
+        const cpfCheck = await connection.query('SELECT * FROM customers WHERE cpf = $1;', [cpf]);
+        if(cpfCheck.rows.length !== 0) {
+            return resp.sendStatus(409);
+          }   
+        await connection.query('INSERT INTO customers (name, phone, cpf, birthday) VALUES ($1, $2, $3, $4);', [name, phone, cpf, birthday]);
+        return resp.sendStatus(201);
+    }
+    catch (error){
+        return resp.sendStatus(500);
+    }  
 })
 
 server.listen(4000);
